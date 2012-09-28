@@ -55,7 +55,7 @@ if (navigator.mozGetUserMedia) {
         navigator.mozGetUserMedia(prefs, success, failure);
     };
     createPeerConnection = function() {
-        return new mozPeerConnection();        
+        return new mozRTCPeerConnection();        
     };
     attachStream = function(obj, stream) {
         obj.src = stream;
@@ -326,7 +326,7 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 
 
     // Set callbacks or new media streams
-    pc.onRemoteStreamAdded = function(obj) {
+    pc.onaddstream = function(obj) {
 	log("Got remote stream of type " + obj.type);
 	if (obj.type === "video") {
             attachStream(divs.remote_video, obj.stream);
