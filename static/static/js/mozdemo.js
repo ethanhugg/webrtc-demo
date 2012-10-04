@@ -58,7 +58,7 @@ if (navigator.mozGetUserMedia) {
         return new mozRTCPeerConnection();        
     };
     attachStream = function(obj, stream) {
-        obj.src = stream;
+        obj.mozSrcObject = stream;
         obj.play();
     };
     createOfferWrap = function (p, success, failure) {
