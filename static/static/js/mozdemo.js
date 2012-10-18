@@ -50,12 +50,12 @@ var createAnswerWrap = undefined;
 // Detect which browser we are on and wire up the functions
 // appropriately
 if (navigator.mozGetUserMedia) {
-    console.log("We seem to be on Firefox");   
+    console.log("We seem to be on Firefox");
     getUserMedia = function(prefs, success, failure) {
         navigator.mozGetUserMedia(prefs, success, failure);
     };
     createPeerConnection = function() {
-        return new mozRTCPeerConnection();        
+        return new mozRTCPeerConnection();
     };
     attachStream = function(obj, stream) {
         obj.mozSrcObject = stream;
@@ -65,7 +65,7 @@ if (navigator.mozGetUserMedia) {
       p.createOffer(success, failure);
     };
     createAnswerWrap = function (p, offer, success, failure) {
-      p.createAnswer(offer, success, failure);
+      p.createAnswer(success, failure);
     };
     setRemoteWrap = function(p, msg, success, failure) {
         p.setRemoteDescription(msg, success, failure);
@@ -79,7 +79,7 @@ if (navigator.mozGetUserMedia) {
         navigator.webkitGetUserMedia(prefs, success, failure);
     };
     createPeerConnection = function() {
-        return new webkitPeerConnection00("STUN stun.l.google.com:19302", 
+        return new webkitPeerConnection00("STUN stun.l.google.com:19302",
                                           function(candidate) {
                                               console.log("Got ice candidate " + candidate);
                                               console.log("discarding");
@@ -159,9 +159,9 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 
     var poll_success = function(msg) {
         var js = JSON.parse(msg);
-	
+
         log("Received message " + JSON.stringify(js));
-    
+
 	if (js.body.type == "answer") {
             try {
                 setRemoteWrap(pc,
@@ -191,11 +191,11 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 
         setTimeout(poll, poll_timeout);
     };
-    
+
     var poll_error = function (msg) {
         setTimeout(poll, poll_timeout);
     };
-    
+
     var poll = function () {
         ajax({
                  url: "/msg/" + username + "/",
@@ -215,14 +215,14 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 
     var add_after = function(arr, prefix, toadd) {
 	var narr = [];
-	
+
 	arr.forEach(function(line) {
 			narr.push(line);
 			if (line.indexOf(prefix) === 0) {
 			    narr.push(toadd);
 			}
 		    });
-	
+
 	return narr;
     };
 
@@ -237,12 +237,12 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 	return desc.join("\r\n");
     };
 
-    // Signaling methods    
+    // Signaling methods
     var send_sdpdescription= function(sdp) {
 	log("Modifying description");
-	
+
 	var newbody = modify_description(sdp.sdp);
-	
+
 	log("Modified SDP body = " + newbody);
 
 	var newsdp = {
@@ -254,9 +254,9 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 	    dest:peer,
 	    body: newsdp
 	};
-	
 
-	
+
+
 	log("Sending: " + JSON.stringify(msg));
 
 	ajax({
@@ -273,7 +273,7 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
     };
 
     var createOffer = function() {
-        createOfferWrap(pc, 
+        createOfferWrap(pc,
 	                function(offer) {
 			    offer = deobjify(offer);
                             log("Got offer "+ offer);
@@ -298,7 +298,7 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 					  }, failure);
                          }, failure);
     };
-        
+
     var ready = function() {
 	log("start_call=" + start_call);
 
@@ -313,10 +313,10 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
         poll();
     };
 
-    
+
     log("Calling client: user=" + username + " peer = " + peer);
     var pc = createPeerConnection();
-    
+
     if (pc) {
         log("Created Webrtc object");
     }
@@ -333,7 +333,7 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 	} else if (obj.type == "audio") {
             attachStream(divs.remote_audio, obj.stream);
 	} else {
-	    log("ERROR: Unknown stream type");	    
+	    log("ERROR: Unknown stream type");
 	}
     };
 
@@ -348,7 +348,7 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
                      video_stream = stream;
                      pc.addStream(stream);
                      num_streams++;
-                     
+
                      log("Total streams " + num_streams);
 
                      if (num_streams == 2) {
