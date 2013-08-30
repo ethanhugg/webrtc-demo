@@ -68,10 +68,10 @@ if (navigator.mozGetUserMedia) {
       p.createAnswer(success, failure);
     };
     setRemoteWrap = function(p, msg, success, failure) {
-        p.setRemoteDescription(msg, success, failure);
+        p.setRemoteDescription(new mozRTCSessionDescription(msg), success, failure);
     };
     setLocalWrap = function(p, msg, success, failure) {
-        p.setLocalDescription(msg, success, failure);
+        p.setLocalDescription(new mozRTCSessionDescription(msg), success, failure);
     };
 } else if(navigator.webkitGetUserMedia) {
     console.log("This appears to be Chrome");
@@ -150,7 +150,6 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
     var audio_stream = undefined;
     var video_stream = undefined;
     var pc = undefined;
-    var num_streams = 0;
 
     var log = function(msg) {
         console.log("LOG (" + username + "): " + msg);
@@ -228,11 +227,6 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 
     var modify_description = function(desc_in) {
 	var desc = desc_in.split("\r\n");
-
-	if (check_feature("add_crypto")) {
-	    log("adding crypto line");
-	    desc = add_after(desc, "m=", "a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:KXvY8nSATwMTahhXJmhqWofkNUk4jelbIFzo7YyE");
-	};
 
 	return desc.join("\r\n");
     };
@@ -327,57 +321,34 @@ var CallingClient = function(config_, username, peer, divs, start_call) {
 
     // Set callbacks or new media streams
     pc.onaddstream = function(obj) {
-	log("Got remote stream of type " + obj.type);
-	if (obj.type === "video") {
-            attachStream(divs.remote_video, obj.stream);
-	} else if (obj.type == "audio") {
-            attachStream(divs.remote_audio, obj.stream);
-	} else {
-	    log("ERROR: Unknown stream type");
-	}
+    	log("Got remote stream.");
+        attachStream(divs.remote_video, obj.stream);
     };
 
     log("Calling get user media");
     // Get the video stream
     getUserMedia({video:true}, function(stream){
-                     // Attach to the local element
-                     log("Got video stream");
-                     attachStream(divs.local_video, stream);
+            // Attach to the local element
+            log("Got video stream");
+            attachStream(divs.local_video, stream);
 
-                     // Add to the PC
-                     video_stream = stream;
-                     pc.addStream(stream);
-                     num_streams++;
+            // Add to the PC
+            video_stream = stream;
+            pc.addStream(stream);
 
-                     log("Total streams " + num_streams);
+            // Request a DataChannel
+            dict = {};
+            datachannel = pc.createDataChannel("Data", dict);
 
-                     if (num_streams == 2) {
-                         ready();
-                     }
-                 },
-                 function() {
-                     log("Could not get video stream");
-                 });
-    // Get the audio stream
-    getUserMedia({audio:true}, function(stream){
-                     log("Got audio stream");
-                     // Attach to the local element
-                     attachStream(divs.local_audio, stream);
+            pc.ondatachannel = function(event) {
+                log("DataChannel Open");
+            }
 
-                     // Add to the PC
-                     audio_stream = stream;
-                     pc.addStream(stream);
-                     num_streams++;
-
-                     log("Total streams " + num_streams);
-
-                     if (num_streams == 2) {
-                         ready();
-                     }
-                 }, function() {
-                     log("Could not get audio stream");
-                 });
-
+            ready();
+        },
+        function() {
+            log("Could not get video stream");
+        });
     return {
     	createOffer : createOffer
     };
